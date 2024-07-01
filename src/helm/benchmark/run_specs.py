@@ -476,6 +476,15 @@ def get_classification_metric_specs(delimiter: Optional[str] = None) -> List[Met
         )
     ]
 
+def get_weighted_classification_metric_specs(
+        delimiter: Optional[str] = None, average: str = "weighted", class_defs: Optional[List[str]] = None
+) -> List[MetricSpec]:
+    return [
+        MetricSpec(
+            class_name="helm.benchmark.metrics.classification_metrics.ClassificationMetric",
+            args={"delimiter": delimiter, "average": average, "class_defs": class_defs},
+        )
+    ]
 
 def get_multiple_choice_classification_metric_specs() -> List[MetricSpec]:
     return [
@@ -2583,6 +2592,29 @@ def get_cleva_spec(task: str, version: str, subtask: Optional[str] = None, promp
         groups=["cleva", f"cleva_{task}"],
     )
 
+@run_spec_function("financial_phrasebank")
+def get_financial_phrasebank_spec(subset: str = "sentences_50agree") -> RunSpec:
+    from .scenarios import financial_phrasebank_scenario
+
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.financial_phrasebank_scenario.FinancialPhrasebankScenario",
+        args={"subset": subset},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        instructions=financial_phrasebank_scenario.get_instructions(),
+        input_noun=None,
+        output_noun="Label",
+        max_tokens=30,  # at most ~50 characters per label
+    )
+
+    return RunSpec(
+        name=f"financial_phrasebank:subset={subset}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["financial_phrasebank"],
+    )
 
 ############################################################
 
