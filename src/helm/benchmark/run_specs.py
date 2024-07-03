@@ -779,6 +779,9 @@ def get_cleva_generative_task_metric_spec(task: str, subtask: Optional[str], **k
     return CLEVA_GEN_TASK_TO_METRIC[key](**kwargs)
 
 
+def get_kpi_edgar_metric_specs() -> List[MetricSpec]:
+    return [MetricSpec(class_name="helm.benchmark.metrics.kpi_edgar_metrics.NERAdjustedF1Metric", args={})]
+
 ############################################################
 # Run specs
 
@@ -2614,6 +2617,25 @@ def get_financial_phrasebank_spec(subset: str = "sentences_50agree") -> RunSpec:
         adapter_spec=adapter_spec,
         metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
         groups=["financial_phrasebank"],
+    )
+
+@run_spec_function("kpi_edgar")
+def get_kpi_edgar_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.kpi_edgar_scenario.KPIEDGARScenario",
+        args={},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        input_noun=None, output_noun="Answer", max_tokens=100, max_train_instances=20
+    )
+
+    return RunSpec(
+        name="kpi_edgar",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_f1_metric_specs() + get_kpi_edgar_metric_specs(),
+        groups=["kpi_edgar"],
     )
 
 ############################################################
