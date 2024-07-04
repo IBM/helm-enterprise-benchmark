@@ -51,6 +51,7 @@ from .scenarios.lextreme_scenario import (
     TaskType,
     get_lextreme_task_type,
 )
+from .scenarios.echr_judge_scenario import EchrJudgeScenario
 from helm.benchmark.model_deployment_registry import (
     ModelDeployment,
     get_model_deployment,
@@ -2673,6 +2674,29 @@ def get_legal_opinion_spec() -> RunSpec:
         adapter_spec=adapter_spec,
         metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
         groups=["legal_opinion"],
+    )
+
+# A different implementation (binary classification) of lex_glue_fixed:subset=ecthr_a
+@run_spec_function("echr_judge")
+def get_echr_judge_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.echr_judge_scenario.EchrJudgeScenario", args={"doc_max_length": 600}
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        # instructions=EchrJudgeScenario.PROMPT_INST, # simple intsruction
+        instructions=EchrJudgeScenario.PROMPT_INST_WITH_EX,  # instruction with trivial examples
+        input_noun=EchrJudgeScenario.PROMPT_INPUT,
+        output_noun=EchrJudgeScenario.PROMPT_OUTPUT,
+        max_tokens=1,
+    )
+
+    return RunSpec(
+        name="echr_judge",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["echr_judge"],
     )
 
 ############################################################
