@@ -2723,6 +2723,27 @@ def get_casehold_qa_spec() -> RunSpec:
         groups=["CaseHOLDQA"],
     )
 
+@run_spec_function("legal_contract")
+def get_legal_contract_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.legal_contract_scenario.LegalContractScenario",
+        args={},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        output_noun="Summary",
+        max_tokens=100,  # <=1536 (Limited by BAM)
+        stop_sequences=["\n\n"],  # workaround for the first \n char with gpt-neox-20b
+    )
+
+    return RunSpec(
+        name="legal_contract",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["rouge_1", "rouge_2", "rouge_l"]),
+        groups=["legal_contract"],
+    )
+
 ############################################################
 
 
