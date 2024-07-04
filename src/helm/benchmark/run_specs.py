@@ -782,6 +782,9 @@ def get_cleva_generative_task_metric_spec(task: str, subtask: Optional[str], **k
 def get_kpi_edgar_metric_specs() -> List[MetricSpec]:
     return [MetricSpec(class_name="helm.benchmark.metrics.kpi_edgar_metrics.NERAdjustedF1Metric", args={})]
 
+def get_math_float_match_metric_specs() -> List[MetricSpec]:
+    return get_basic_metric_specs(["float_equiv"])
+
 ############################################################
 # Run specs
 
@@ -2636,6 +2639,20 @@ def get_kpi_edgar_spec() -> RunSpec:
         adapter_spec=adapter_spec,
         metric_specs=get_f1_metric_specs() + get_kpi_edgar_metric_specs(),
         groups=["kpi_edgar"],
+    )
+
+@run_spec_function("conv_fin_qa")
+def get_conv_fin_qa_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(class_name="helm.benchmark.scenarios.conv_fin_qa_scenario.ConvFinQAScenario", args={})
+
+    adapter_spec = get_generation_adapter_spec(input_noun="Passage", output_noun="Answer")
+
+    return RunSpec(
+        name="conv_fin_qa",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_math_float_match_metric_specs(),
+        groups=["conv_fin_qa"],
     )
 
 ############################################################
