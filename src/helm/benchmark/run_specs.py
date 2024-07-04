@@ -2655,6 +2655,26 @@ def get_conv_fin_qa_spec() -> RunSpec:
         groups=["conv_fin_qa"],
     )
 
+@run_spec_function("legal_opinion")
+def get_legal_opinion_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.legal_opinion_scenario.LegalOpinionScenario", args={}
+    )
+
+    instructions = "Classify the sentences into one of the 3 sentiment categories. Possible labels: positive, neutral, negative."  # noqa
+    adapter_spec = get_generation_adapter_spec(
+        instructions=instructions,
+        output_noun="Label",
+    )
+
+    return RunSpec(
+        name="legal_opinion",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["legal_opinion"],
+    )
+
 ############################################################
 
 
