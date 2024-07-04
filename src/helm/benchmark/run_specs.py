@@ -2699,6 +2699,30 @@ def get_echr_judge_spec() -> RunSpec:
         groups=["echr_judge"],
     )
 
+# A different implementation of lex_glue_fixed:subset=case_hold
+@run_spec_function("casehold_qa")
+def get_casehold_qa_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(class_name="helm.benchmark.scenarios.casehold_qa_scenario.CaseHOLDQAScenario", args={})
+
+    method = ADAPT_MULTIPLE_CHOICE_JOINT
+    adapter_spec = get_multiple_choice_adapter_spec(
+        method=method,
+        instructions="Give a letter answer among A, B, C, D, or E.",
+        input_noun="Passage",
+        output_noun="Answer",
+        max_train_instances=2,
+    )
+
+    metric_specs = get_f1_metric_specs()
+
+    return RunSpec(
+        name="casehold_qa",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=metric_specs,
+        groups=["CaseHOLDQA"],
+    )
+
 ############################################################
 
 

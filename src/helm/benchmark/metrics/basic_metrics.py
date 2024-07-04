@@ -182,6 +182,9 @@ def quasi_prefix_exact_match(gold: str, pred: str) -> float:
 
 
 def f1_score(gold: str, pred: str) -> float:
+    if not pred:  # answer is None
+        return 0.0
+
     ret = f_measure(set(normalize_text(gold).split()), set(normalize_text(pred).split()))
     if ret is None:  # answer is the empty string after normalizing
         return 0.0
