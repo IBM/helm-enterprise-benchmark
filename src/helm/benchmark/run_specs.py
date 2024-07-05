@@ -2775,6 +2775,32 @@ def get_sumosum_spec() -> RunSpec:
         groups=["sumosum"],
     )
 
+@run_spec_function("cti_mitre")
+def get_cti_mitre_spec(num_options: int = 10, seed: int = 42, method: str = ADAPT_MULTIPLE_CHOICE_JOINT) -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.cti_mitre_scenario.CtiMitreScenario",
+        args={
+            "num_options": num_options,
+            "seed": seed,
+        },
+    )
+
+    adapter_spec = get_multiple_choice_adapter_spec(
+        method=method,
+        instructions="Answer the possible security attacks in each of the following situations from each of the options below.",  # noqa
+        input_noun="Situation",
+        output_noun="Answer",
+        max_train_instances=10,
+    )
+
+    return RunSpec(
+        name=f"cti_mitre:num_options={num_options},seed={seed},method={method}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["exact_match", "quasi_exact_match", "f1_score"]),
+        groups=["cti_mitre"],
+    )
+
 
 ############################################################
 
