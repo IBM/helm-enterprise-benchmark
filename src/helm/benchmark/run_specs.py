@@ -2744,6 +2744,38 @@ def get_legal_contract_spec() -> RunSpec:
         groups=["legal_contract"],
     )
 
+@run_spec_function("sumosum")
+def get_sumosum_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.sumosum_scenario.SUMOSumScenario",
+        args={
+            # "sampling_min_length": 100,
+            # "sampling_max_length": 700,
+            # "doc_max_length": 3700,
+        },
+    )
+
+    instructions = "Generate the title of the following article."
+    adapter_spec = get_generation_adapter_spec(
+        instructions=instructions,
+        output_noun="Title",
+        max_train_instances=0,
+        max_tokens=100,  # <=1536 (Limited by BAM)
+        stop_sequences=["\n\n"],  # workaround for the first \n char with gpt-neox-20b
+    )
+
+    # NOTE doc_max_length(3700 words) + max_tokens(100 tokens) <= max_request_length(4096 tokens)
+    # see EncoderDecoderWindowService.fits_within_context_window
+
+    return RunSpec(
+        name="sumosum",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["rouge_1", "rouge_2", "rouge_l"]),
+        groups=["sumosum"],
+    )
+
+
 ############################################################
 
 
