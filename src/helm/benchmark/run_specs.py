@@ -2623,6 +2623,23 @@ def get_financial_phrasebank_spec(subset: str = "sentences_50agree") -> RunSpec:
         groups=["financial_phrasebank"],
     )
 
+@run_spec_function("news_headline")
+def get_news_headline_spec(category: str) -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.news_headline_scenario.NewsHeadlineScenario",
+        args={"category": category},
+    )
+
+    adapter_spec = get_generation_adapter_spec(input_noun="Passage", output_noun="Answer")
+
+    return RunSpec(
+        name=f"news_headline:category={category}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_classification_metric_specs(),
+        groups=["news_headline"],
+    )
+
 @run_spec_function("kpi_edgar")
 def get_kpi_edgar_spec() -> RunSpec:
     scenario_spec = ScenarioSpec(
