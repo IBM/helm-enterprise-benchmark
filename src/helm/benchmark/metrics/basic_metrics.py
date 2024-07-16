@@ -31,6 +31,7 @@ from helm.benchmark.window_services.window_service_factory import WindowServiceF
 from helm.benchmark.window_services.tokenizer_service import TokenizerService
 from helm.benchmark.scenarios.scenario import CORRECT_TAG, Instance, Reference
 from helm.benchmark.scenarios.math_scenario import is_equiv, is_equiv_chain_of_thought
+from helm.benchmark.scenarios.conv_fin_qa_scenario import float_equiv
 from helm.benchmark.scenarios.code_scenario import CodeReference
 from helm.benchmark.metrics.cleva_metrics_helper import ChineseTokenizer
 from . import code_metrics_helper
@@ -181,6 +182,9 @@ def quasi_prefix_exact_match(gold: str, pred: str) -> float:
 
 
 def f1_score(gold: str, pred: str) -> float:
+    if not pred:  # answer is None
+        return 0.0
+
     ret = f_measure(set(normalize_text(gold).split()), set(normalize_text(pred).split()))
     if ret is None:  # answer is the empty string after normalizing
         return 0.0
@@ -522,6 +526,7 @@ class BasicMetric(Metric):
             "f1_set_match": f1_set_match,
             "math_equiv": is_equiv,
             "math_equiv_chain_of_thought": is_equiv_chain_of_thought,
+            "float_equiv": float_equiv,
             "code_eval_acc": code_eval,
             "pass": code_eval,
             "f1_score": f1_score,

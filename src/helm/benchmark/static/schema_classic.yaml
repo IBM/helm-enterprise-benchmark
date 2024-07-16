@@ -1632,6 +1632,18 @@ metrics:
     lower_is_better: false
   # CLEVA Chinese bias, copyright and toxicity metrics share the same name as the original HELM metrics
 
+  # KPI-EDGAR metrics (Enterprise Benchmark)
+  - name: kpi_edgar_adjusted_f1.macro
+    display_name: KPI-EDGAR Adjusted F1 Score (macro average)
+    short_display_name: KPI_EDGAR_Adj_F1
+    description: Adjusted F1 Score defined in the KPI-EDGAR paper. The score is a macro average over various tags. This is used for kpi_edgar scenario only.
+    lower_is_better: false
+  - name: kpi_edgar_adjusted_f1.modified_macro
+    display_name: Modified KPI-EDGAR Adjusted F1 Score (macro average)
+    short_display_name: Mod_KPI_EDGAR_Adj_F1
+    description: Adjusted F1 Score defined in a standard manner. The score is a macro average over various tags. This is used for kpi_edgar scenario only.
+    lower_is_better: false
+
 ############################################################
 perturbations:
   - name: robustness
@@ -1930,6 +1942,10 @@ run_groups:
       - sentiment_analysis
       - toxicity_detection
       - miscellaneous_text_classification
+      - enterprise_benchmark_financial
+      - enterprise_benchmark_legal
+      - enterprise_benchmark_climate_sustainability
+      - enterprise_benchmark_cybersecurity
 
   - name: targeted_evaluations
     display_name: Targeted evaluations
@@ -2207,6 +2223,40 @@ run_groups:
       - cleva_text_classification
       - cleva_toxicity_detection
       - cleva_translation
+
+  - name: enterprise_benchmark_financial
+    display_name: Financial (Enterprise Benchmark)
+    description: Financial Scenarios for Enterprise Benchmark.
+    category: Core scenarios
+    subgroups:
+      - financial_phrasebank
+      - news_headline
+      - kpi_edgar
+      - conv_fin_qa
+
+  - name: enterprise_benchmark_legal
+    display_name: Legal (Enterprise Benchmark)
+    description: Legal Scenarios for Enterprise Benchmark.
+    category: Core scenarios
+    subgroups:
+      - legal_contract
+      - casehold_qa
+      - echr_judge
+      - legal_opinion
+
+  - name: enterprise_benchmark_climate_sustainability
+    display_name: Climate & Sustainability (Enterprise Benchmark)
+    description: Climate & Sustainability Scenarios for Enterprise Benchmark.
+    category: Core scenarios
+    subgroups:
+      - sumosum
+
+  - name: enterprise_benchmark_cybersecurity
+    display_name: Cybersecurity (Enterprise Benchmark)
+    description: Cybersecurity Scenarios for Enterprise Benchmark.
+    category: Core scenarios
+    subgroups:
+      - cti_mitre
 
 ### Scenarios (the actual scenarios)
 
@@ -3798,6 +3848,182 @@ run_groups:
     taxonomy:
       task: story generation
     todo: true
+
+
+# Enterprise Benchmark scenarios
+
+# enterprise_benchmark_financial
+  - name: financial_phrasebank
+    display_name: Financial Phrase Bank (Sentiment Analysis)
+    description: Good Debt or Bad Debt - Detecting Semantic Orientations in Economic Texts [(Malo et al., 2013)](https://arxiv.org/pdf/1307.5336.pdf).
+    metric_groups:
+      - accuracy
+      - calibration
+      - robustness
+      - fairness
+      - bias
+      - toxicity
+      - efficiency
+      - general_information
+    environment:
+      main_name: quasi_exact_match
+      main_split: test
+    taxonomy:
+      task: sentiment analysis
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: news_headline
+    display_name: Commodity News Headlines (Classification)
+    description: Impact of News on the Commodity Market - Dataset and Results [(Sinha et al., 2020)](https://arxiv.org/pdf/2009.04202.pdf).
+    metric_groups:
+      - accuracy
+      - calibration
+      - robustness
+      - fairness
+      - bias
+      - toxicity
+      - efficiency
+      - general_information
+    environment:
+      main_name: quasi_exact_match
+      main_split: test
+    taxonomy:
+      task: text classification
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: kpi_edgar
+    display_name: KPI-EDGAR Financial Documents (Named Entity Recognition)
+    description: KPI-EDGAR - A Novel Dataset and Accompanying Metric for Relation Extraction from Financial Documents [(Deußer et al., 2022)](https://arxiv.org/pdf/2210.09163.pdf).
+    metric_groups:
+      - accuracy
+      - general_information
+    environment:
+      main_name: kpi_edgar_adjusted_f1.macro
+      main_split: test
+    taxonomy:
+      task: named entity recognition
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: conv_fin_qa
+    display_name: ConvFinQA Financial Conversations (Numerical Reasoning)
+    description: ConvFinQA - Exploring the Chain of Numerical Reasoning in Conversational Finance Question Answering [(Chen ey al., 2022)](https://arxiv.org/pdf/2210.03849.pdf).
+    metric_groups:
+      - general_information
+    environment:
+      main_split: valid
+    taxonomy:
+      task: numerical reasoning
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+# enterprise_benchmark_legal
+  - name: legal_contract
+    display_name: Legal Contracts (Summarization)
+    description: Plain English Summarization of Contracts [(Manor et al., 2019)](https://aclanthology.org/W19-2201.pdf).
+    metric_groups:
+      - general_information
+    environment:
+      main_name: rouge_2
+      main_split: test
+    taxonomy:
+      task: summarization
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: casehold_qa
+    display_name: CaseHOLD Legal Cases and Holdings (Question Answering)
+    description: When Does Pretraining Help? Assessing Self-Supervised Learning for Law and the CaseHOLD Dataset [(Zheng et al, 2021)](https://arxiv.org/pdf/2104.08671.pdf).
+    metric_groups: []
+    taxonomy:
+      task: question answering
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: echr_judge
+    display_name: ECHR Legal Judgments (Classification)
+    description: Neural Legal Judgment Prediction in English [(Chalkidis et al., 2019)](https://arxiv.org/pdf/1906.02059.pdf).
+    metric_groups:
+      - accuracy
+      - general_information
+    environment:
+      main_name: quasi_exact_match
+      main_split: test
+    taxonomy:
+      task: text classification
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+  - name: legal_opinion
+    display_name: Legal Opinions (Sentiment Analysis)
+    description: Effective Approach to Develop a Sentiment Annotator For Legal Domain in a Low Resource Setting [(Ratnayaka et al., 2020)](https://arxiv.org/pdf/2011.00318.pdf).
+    metric_groups:
+      - accuracy
+      - general_information
+    environment:
+      main_name: quasi_exact_match
+      main_split: test
+    taxonomy:
+      task: sentiment analysis
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+
+# enterprise_benchmark_climate_sustainability
+  - name: sumosum
+    display_name: SUMO Web Claims (Summarization)
+    description: Generating Fact Checking Summaries for Web Claims [(Mishra et al., 2020)](https://aclanthology.org/2020.wnut-1.12/).
+    metric_groups:
+      - general_information
+    environment:
+      main_name: rouge_2
+      main_split: test
+    taxonomy:
+      task: summarization
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
+# enterprise_benchmark_cybersecurity
+  - name: cti_mitre
+    display_name: CTI-to-MITRE Cyber Threat Intelligence (Classification)
+    description: Automatic Mapping of Unstructured Cyber Threat Intelligence - An Experimental Study [(Orbinato et al., 2022)](https://arxiv.org/pdf/2208.12144.pdf).
+    metric_groups:
+      - accuracy
+      - calibration
+      - robustness
+      - fairness
+      - efficiency
+      - general_information
+    environment:
+      main_name: quasi_exact_match
+      main_split: test
+    taxonomy:
+      task: text classification
+      what: "?"
+      who: "?"
+      when: "?"
+      language: English
+
 
 # Domain coverage
   - name: biomedical_scenarios

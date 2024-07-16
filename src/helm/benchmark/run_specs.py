@@ -51,6 +51,7 @@ from .scenarios.lextreme_scenario import (
     TaskType,
     get_lextreme_task_type,
 )
+from .scenarios.echr_judge_scenario import EchrJudgeScenario
 from helm.benchmark.model_deployment_registry import (
     ModelDeployment,
     get_model_deployment,
@@ -476,6 +477,15 @@ def get_classification_metric_specs(delimiter: Optional[str] = None) -> List[Met
         )
     ]
 
+def get_weighted_classification_metric_specs(
+        delimiter: Optional[str] = None, average: str = "weighted", class_defs: Optional[List[str]] = None
+) -> List[MetricSpec]:
+    return [
+        MetricSpec(
+            class_name="helm.benchmark.metrics.classification_metrics.ClassificationMetric",
+            args={"delimiter": delimiter, "average": average, "class_defs": class_defs},
+        )
+    ]
 
 def get_multiple_choice_classification_metric_specs() -> List[MetricSpec]:
     return [
@@ -769,6 +779,12 @@ def get_cleva_generative_task_metric_spec(task: str, subtask: Optional[str], **k
         key += ":" + subtask
     return CLEVA_GEN_TASK_TO_METRIC[key](**kwargs)
 
+
+def get_kpi_edgar_metric_specs() -> List[MetricSpec]:
+    return [MetricSpec(class_name="helm.benchmark.metrics.kpi_edgar_metrics.NERAdjustedF1Metric", args={})]
+
+def get_math_float_match_metric_specs() -> List[MetricSpec]:
+    return get_basic_metric_specs(["float_equiv"])
 
 ############################################################
 # Run specs
@@ -2581,6 +2597,225 @@ def get_cleva_spec(task: str, version: str, subtask: Optional[str] = None, promp
         adapter_spec=adapter_spec,
         metric_specs=metric_specs,
         groups=["cleva", f"cleva_{task}"],
+    )
+
+@run_spec_function("financial_phrasebank")
+def get_financial_phrasebank_spec(subset: str = "sentences_50agree") -> RunSpec:
+    from .scenarios import financial_phrasebank_scenario
+
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.financial_phrasebank_scenario.FinancialPhrasebankScenario",
+        args={"subset": subset},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        instructions=financial_phrasebank_scenario.get_instructions(),
+        input_noun=None,
+        output_noun="Label",
+        max_tokens=30,  # at most ~50 characters per label
+    )
+
+    return RunSpec(
+        name=f"financial_phrasebank:subset={subset}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["financial_phrasebank"],
+    )
+
+@run_spec_function("news_headline")
+def get_news_headline_spec(category: str) -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.news_headline_scenario.NewsHeadlineScenario",
+        args={"category": category},
+    )
+
+    adapter_spec = get_generation_adapter_spec(input_noun="Passage", output_noun="Answer")
+
+    return RunSpec(
+        name=f"news_headline:category={category}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_classification_metric_specs(),
+        groups=["news_headline"],
+    )
+
+@run_spec_function("kpi_edgar")
+def get_kpi_edgar_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.kpi_edgar_scenario.KPIEDGARScenario",
+        args={},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        input_noun=None, output_noun="Answer", max_tokens=100, max_train_instances=20
+    )
+
+    return RunSpec(
+        name="kpi_edgar",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_f1_metric_specs() + get_kpi_edgar_metric_specs(),
+        groups=["kpi_edgar"],
+    )
+
+@run_spec_function("conv_fin_qa")
+def get_conv_fin_qa_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(class_name="helm.benchmark.scenarios.conv_fin_qa_scenario.ConvFinQAScenario", args={})
+
+    adapter_spec = get_generation_adapter_spec(input_noun="Passage", output_noun="Answer")
+
+    return RunSpec(
+        name="conv_fin_qa",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_math_float_match_metric_specs(),
+        groups=["conv_fin_qa"],
+    )
+
+@run_spec_function("legal_opinion")
+def get_legal_opinion_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.legal_opinion_scenario.LegalOpinionScenario", args={}
+    )
+
+    instructions = "Classify the sentences into one of the 3 sentiment categories. Possible labels: positive, neutral, negative."  # noqa
+    adapter_spec = get_generation_adapter_spec(
+        instructions=instructions,
+        output_noun="Label",
+    )
+
+    return RunSpec(
+        name="legal_opinion",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["legal_opinion"],
+    )
+
+# A different implementation (binary classification) of lex_glue_fixed:subset=ecthr_a
+@run_spec_function("echr_judge")
+def get_echr_judge_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.echr_judge_scenario.EchrJudgeScenario", args={"doc_max_length": 600}
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        # instructions=EchrJudgeScenario.PROMPT_INST, # simple intsruction
+        instructions=EchrJudgeScenario.PROMPT_INST_WITH_EX,  # instruction with trivial examples
+        input_noun=EchrJudgeScenario.PROMPT_INPUT,
+        output_noun=EchrJudgeScenario.PROMPT_OUTPUT,
+        max_tokens=1,
+    )
+
+    return RunSpec(
+        name="echr_judge",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_exact_match_metric_specs() + get_weighted_classification_metric_specs(),
+        groups=["echr_judge"],
+    )
+
+# A different implementation of lex_glue_fixed:subset=case_hold
+@run_spec_function("casehold_qa")
+def get_casehold_qa_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(class_name="helm.benchmark.scenarios.casehold_qa_scenario.CaseHOLDQAScenario", args={})
+
+    method = ADAPT_MULTIPLE_CHOICE_JOINT
+    adapter_spec = get_multiple_choice_adapter_spec(
+        method=method,
+        instructions="Give a letter answer among A, B, C, D, or E.",
+        input_noun="Passage",
+        output_noun="Answer",
+        max_train_instances=2,
+    )
+
+    metric_specs = get_f1_metric_specs()
+
+    return RunSpec(
+        name="casehold_qa",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=metric_specs,
+        groups=["CaseHOLDQA"],
+    )
+
+@run_spec_function("legal_contract")
+def get_legal_contract_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.legal_contract_scenario.LegalContractScenario",
+        args={},
+    )
+
+    adapter_spec = get_generation_adapter_spec(
+        output_noun="Summary",
+        max_tokens=100,  # <=1536 (Limited by BAM)
+        stop_sequences=["\n\n"],  # workaround for the first \n char with gpt-neox-20b
+    )
+
+    return RunSpec(
+        name="legal_contract",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["rouge_1", "rouge_2", "rouge_l"]),
+        groups=["legal_contract"],
+    )
+
+@run_spec_function("sumosum")
+def get_sumosum_spec() -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.sumosum_scenario.SUMOSumScenario",
+        args={
+            # "sampling_min_length": 100,
+            # "sampling_max_length": 700,
+            # "doc_max_length": 3700,
+        },
+    )
+
+    instructions = "Generate the title of the following article."
+    adapter_spec = get_generation_adapter_spec(
+        instructions=instructions,
+        output_noun="Title",
+        max_train_instances=0,
+        max_tokens=100,  # <=1536 (Limited by BAM)
+        stop_sequences=["\n\n"],  # workaround for the first \n char with gpt-neox-20b
+    )
+
+    # NOTE doc_max_length(3700 words) + max_tokens(100 tokens) <= max_request_length(4096 tokens)
+    # see EncoderDecoderWindowService.fits_within_context_window
+
+    return RunSpec(
+        name="sumosum",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["rouge_1", "rouge_2", "rouge_l"]),
+        groups=["sumosum"],
+    )
+
+@run_spec_function("cti_mitre")
+def get_cti_mitre_spec(num_options: int = 10, seed: int = 42, method: str = ADAPT_MULTIPLE_CHOICE_JOINT) -> RunSpec:
+    scenario_spec = ScenarioSpec(
+        class_name="helm.benchmark.scenarios.cti_mitre_scenario.CtiMitreScenario",
+        args={
+            "num_options": num_options,
+            "seed": seed,
+        },
+    )
+
+    adapter_spec = get_multiple_choice_adapter_spec(
+        method=method,
+        instructions="Answer the possible security attacks in each of the following situations from each of the options below.",  # noqa
+        input_noun="Situation",
+        output_noun="Answer",
+        max_train_instances=10,
+    )
+
+    return RunSpec(
+        name=f"cti_mitre:num_options={num_options},seed={seed},method={method}",
+        scenario_spec=scenario_spec,
+        adapter_spec=adapter_spec,
+        metric_specs=get_basic_metric_specs(["exact_match", "quasi_exact_match", "f1_score"]),
+        groups=["cti_mitre"],
     )
 
 
