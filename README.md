@@ -1,5 +1,12 @@
 <!--intro-start-->
 # Enterprise Benchmarks for Large Language Model Evaluation
+NOTE: This work has been merged to
+the original HELM repository.
+Please visit the original project website to access the latest code and documentation.
+- https://crfm.stanford.edu/helm/classic/latest/
+- https://github.com/stanford-crfm/helm/blob/main/docs/enterprise_benchmark.md
+
+
 This is a fork from the original HELM for a study of enterprise benchmarking of LLMs using domain-specific datasets.
 The original README continues after this section.
 
